@@ -1,4 +1,4 @@
-<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"></head><body><title>Carte du vapotage communal</title>
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><style>[hidden]{display:none !important}</style></head><body><title>Carte du vapotage communal</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
 :root{
@@ -66,7 +66,16 @@ a{color:var(--accent)}
   background:var(--panel); color:var(--ink-soft); border:0; cursor:pointer}
 .vb-mode button.on{background:var(--accent); color:#fff}
 .vb-controls{display:flex; flex-wrap:wrap; align-items:center; gap:8px; font-size:.85rem; color:var(--ink-soft)}
-.vb-controls select{max-width:320px}
+.vb-controls[hidden]{display:none !important}
+.vb-controls label{font-weight:600}
+select{
+  -webkit-appearance:none; appearance:none;
+  font:inherit; font-size:.88rem; font-weight:500; color:var(--ink);
+  background:var(--panel) url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23808A96' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 10px center/10px 6px;
+  border:1.5px solid var(--line); border-radius:8px; padding:8px 30px 8px 12px; cursor:pointer}
+select:hover{border-color:var(--accent)}
+select:focus{border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft); outline:none}
+select{max-width:340px}
 .bivleg{display:grid; grid-template-columns:auto auto; gap:6px; align-items:end; margin:10px 0 4px}
 .bivgrid{display:grid; grid-template-columns:repeat(3,22px); grid-template-rows:repeat(3,22px)}
 .bivgrid i{display:block; border:1px solid var(--panel)}
