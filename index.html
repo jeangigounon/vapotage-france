@@ -51759,8 +51759,32 @@ function renderIrisFeats(parentCode, feats){
     irisFill = r => r ? rampAt(g(r), {lo, hi}) : 'var(--chip)';
     setLegendLocal(lo, hi, comRates.get(parentCode)?.nom || parentCode);
   } else {
-    irisFill = r => fillRates(r, false); // classes nationales (communes)
+    // classes nationales (communes) + nuance tonale locale : au sein d'une même
+    // classe, la tonalité varie selon la position du quartier sur les deux
+    // indicateurs (plus sombre = plus haut localement)
+    const gA = VIEWS[view.a].get, gB = VIEWS[view.b].get;
+    const ext = g => {
+      const vs = feats.map(f=>{ const r = irisRates.get(f.properties.code); return r ? g(r) : null; })
+                      .filter(v=>v!=null && isFinite(v));
+      let lo = Math.min(...vs), hi = Math.max(...vs);
+      if(!(hi > lo)) hi = lo + 1;
+      return {lo, hi};
+    };
+    const eA = ext(gA), eB = ext(gB);
+    irisFill = r => {
+      if(!r) return 'var(--chip)';
+      const base = fillRates(r, false);
+      if(base === 'var(--chip)') return base;
+      const tA = (gA(r) - eA.lo) / (eA.hi - eA.lo);
+      const tB = (gB(r) - eB.lo) / (eB.hi - eB.lo);
+      const t = Math.max(0, Math.min(1, (tA + tB) / 2));
+      const c = d3.lab(d3.color(base));
+      c.l = Math.max(8, Math.min(95, c.l + (0.5 - t) * 24));
+      return c.formatHex();
+    };
     renderLegend();
+    legNote.textContent += ' Dans la vue quartiers, la tonalité est nuancée selon la position'
+      + ' locale : plus sombre = plus haut sur les deux indicateurs au sein de la ville.';
   }
   gIris.selectAll('path').data(feats, f=>f.properties.code).join('path')
     .attr('class','iris')
