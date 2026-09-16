@@ -5,18 +5,24 @@
   --bg:#FAF8F5; --panel:#FFFFFF; --ink:#22272E; --ink-soft:#5A6270; --line:#E4E0D8;
   --accent:#2E7D8C; --accent-soft:#E3EEF0; --smoke:#B3593C; --smoke-soft:#F3E5DE;
   --chip:#F0EDE7; --sea:#F3F1EC; --border-map:#FFFFFF; --dim:rgba(250,248,245,.55);
+  --seq1:#2E7D8C; --seq2:#4E98A5; --seq3:#74B2BC; --seq4:#A3CCD2; --seq5:#D0E4E7;
+  --cat1:#2E7D8C; --cat2:#B3593C; --cat3:#8A7B2E; --cat4:#5E6E96; --cat5:#9C8AA5;
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
     --bg:#15181D; --panel:#1D2127; --ink:#E7E9EC; --ink-soft:#9AA3AF; --line:#31363E;
     --accent:#5FAEBD; --accent-soft:#22333A; --smoke:#CE7D5F; --smoke-soft:#3A2A23;
     --chip:#262B32; --sea:#181C22; --border-map:#15181D; --dim:rgba(21,24,29,.62);
+    --seq1:#5FAEBD; --seq2:#4E96A5; --seq3:#3F7B88; --seq4:#33616C; --seq5:#284A52;
+    --cat1:#5FAEBD; --cat2:#CE7D5F; --cat3:#B0A054; --cat4:#8496C4; --cat5:#B39FC0;
   }
 }
 :root[data-theme="dark"]{
   --bg:#15181D; --panel:#1D2127; --ink:#E7E9EC; --ink-soft:#9AA3AF; --line:#31363E;
   --accent:#5FAEBD; --accent-soft:#22333A; --smoke:#CE7D5F; --smoke-soft:#3A2A23;
   --chip:#262B32; --sea:#181C22; --border-map:#15181D; --dim:rgba(21,24,29,.62);
+  --seq1:#5FAEBD; --seq2:#4E96A5; --seq3:#3F7B88; --seq4:#33616C; --seq5:#284A52;
+  --cat1:#5FAEBD; --cat2:#CE7D5F; --cat3:#B0A054; --cat4:#8496C4; --cat5:#B39FC0;
 }
 *{box-sizing:border-box}
 body{background:var(--bg); color:var(--ink); font:15px/1.5 "IBM Plex Sans",system-ui,sans-serif; margin:0}
@@ -101,6 +107,33 @@ button:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
 .sugg button:hover,.sugg button.k{background:var(--accent-soft)}
 .sugg .meta{color:var(--ink-soft); font-size:.78rem; white-space:nowrap}
 footer{margin-top:18px; color:var(--ink-soft); font-size:.78rem; max-width:85ch}
+/* --- fiche commune sous la carte (profil observatoire) ----------------------- */
+.profcard{margin-top:16px}
+.profcard[hidden]{display:none !important}
+.commune-head{display:flex; flex-wrap:wrap; align-items:baseline; gap:8px 14px}
+.commune-head h3{font-family:"Archivo"; font-size:1.35rem; font-weight:700; margin:0}
+.commune-head .codes{color:var(--ink-soft); font-size:.84rem}
+.commune-head .obs{margin-left:auto; font-size:.84rem; white-space:nowrap}
+.bignums{display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:12px; margin:16px 0 6px}
+.bn{padding:13px 15px; border-radius:8px; background:var(--accent-soft)}
+.bn.smoke{background:var(--smoke-soft)}
+.bn.plain{background:var(--chip)}
+.bn b{display:block; font-family:"Archivo"; font-size:1.6rem; font-weight:700; font-variant-numeric:tabular-nums}
+.bn.vape b{color:var(--accent)} .bn.smoke b{color:var(--smoke)}
+.bn span{font-size:.76rem; color:var(--ink-soft)}
+.compare{margin:14px 0 4px; display:grid; gap:8px}
+.cmp-row{display:grid; grid-template-columns:150px 1fr 56px; align-items:center; gap:10px; font-size:.84rem}
+.cmp-row .lbl{color:var(--ink-soft); white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.cmp-row .val{text-align:right; font-variant-numeric:tabular-nums; font-weight:600}
+.track{height:10px; background:var(--chip); border-radius:5px; position:relative; overflow:hidden}
+.track i{position:absolute; top:0; bottom:0; left:0; background:var(--accent); border-radius:5px}
+.profiles{display:grid; grid-template-columns:repeat(auto-fit,minmax(290px,1fr)); gap:18px 30px; margin-top:18px}
+.pgroup h4{font-size:.84rem; font-weight:600; margin:0 0 8px; font-family:"Archivo"}
+.stack{display:flex; height:24px; border-radius:6px; overflow:hidden}
+.stack i{display:block; height:100%}
+.plegend{display:flex; flex-wrap:wrap; gap:4px 14px; margin-top:8px; font-size:.77rem; color:var(--ink-soft)}
+.plegend .sw{display:inline-block; width:9px; height:9px; border-radius:2px; margin-right:5px}
+.plegend b{color:var(--ink); font-variant-numeric:tabular-nums; font-weight:600}
 </style>
 
 <div class="wrap">
@@ -194,6 +227,10 @@ footer{margin-top:18px; color:var(--ink-soft); font-size:.78rem; max-width:85ch}
       statut tabagique) : <a id="obshome" href="https://claude.ai/code/artifact/76fbee56-6048-4178-9199-d006bc35dbfe" target="_blank" rel="noopener">Observatoire du vapotage communal</a>.</p>
     </div>
   </div>
+</div>
+
+<div class="card profcard" id="profcard" hidden>
+  <div id="profbody"></div>
 </div>
 
 <footer>Estimations synthétiques — aucune donnée de vapotage n'existe au niveau communal ; les taux
@@ -51438,6 +51475,7 @@ function showDeptCard(code){
       <div><span>Vapoteurs quotidiens estimés</span><b>${fmt(a[4])}</b></div>
       <div><span>Communes</span><b>${fmt((communesByDept.get(code)||[]).length)}</b></div>
     </div>`;
+  hideProfile();
 }
 function showCommuneCard(code){
   const r = comRates.get(code); if(!r) return;
@@ -51452,7 +51490,9 @@ function showCommuneCard(code){
       <div><span>Vapoteurs quotidiens estimés</span><b>${fmt(Math.round(r.pop*r.vd/100))}</b></div>
       <div><span>Département (moyenne)</span><b>${deptAgg[d]?fmtPct(deptAgg[d][0]):'—'}</b></div>
     </div>
-    <p class="note"><a href="${obsLink(code)}" target="_blank" rel="noopener">Profil complet des vapoteurs de cette commune →</a></p>`;
+    <p class="note">Profil complet des vapoteurs affiché sous la carte ·
+    <a href="${obsLink(code)}" target="_blank" rel="noopener">ouvrir dans l'Observatoire →</a></p>`;
+  renderProfile(code);
 }
 
 // --- rendu départements -----------------------------------------------------
@@ -51655,7 +51695,9 @@ function showIrisCard(code){
     </div>
     <p class="note">Maille d'environ 2 000 habitants : estimation à lire comme un profil de
     quartier ; la fourchette reflète l'incertitude communale et sous-estime celle du quartier.</p>
-    <p class="note"><a href="${obsLink(r.parent)}" target="_blank" rel="noopener">Profil complet des vapoteurs de ${parent?parent.nom:'la commune'} →</a></p>`;
+    <p class="note">Profil complet des vapoteurs de ${parent?parent.nom:'la commune'} affiché sous la carte ·
+    <a href="${obsLink(r.parent)}" target="_blank" rel="noopener">ouvrir dans l'Observatoire →</a></p>`;
+  renderProfile(r.parent, r.nom);
 }
 const legTicks = document.getElementById('legticks');
 const legNote = document.getElementById('legnote');
@@ -51910,6 +51952,7 @@ function resetView(){
   setCrumb([]);
   hint.textContent = 'Cliquez sur un département pour zoomer';
   selbody.innerHTML = '<p class="note">Survolez la carte, puis cliquez sur un département pour explorer ses communes.</p>';
+  hideProfile();
 }
 backbtn.addEventListener('click', resetView);
 svg.on('click', ev=>{
@@ -51922,6 +51965,100 @@ svg.on('click', ev=>{
   else if(currentCommune){ const d = depts.find(x=>x.properties.code===currentDept); if(d) zoomToDept(d); }
   else if(currentDept) resetView();
 });
+
+// --- fiche commune sous la carte --------------------------------------------
+// Profil complet (données observatoire), chargé à la demande par département :
+// documents db `geo/p_<dept>_<i>` sur claude.ai, fichiers geo/p_<dept>.json sinon.
+const REGNAMES = {"11":"Île-de-France","24":"Centre-Val de Loire","27":"Bourgogne-Franche-Comté","28":"Normandie","32":"Hauts-de-France","44":"Grand Est","52":"Pays de la Loire","53":"Bretagne","75":"Nouvelle-Aquitaine","76":"Occitanie","84":"Auvergne-Rhône-Alpes","93":"Provence-Alpes-Côte d'Azur","94":"Corse","01":"Guadeloupe","02":"Martinique","03":"Guyane","04":"La Réunion","06":"Mayotte"};
+const REGRATES = {"94":10.0,"53":9.1,"75":7.4,"28":7.2,"52":7.2,"27":7.2,"93":7.0,"76":6.2,"24":5.9,"32":5.7,"11":5.6,"44":4.7,"84":4.6}; // observés Baromètre 2024
+const NAT_DAILY = 6.1;
+const profcard = document.getElementById('profcard');
+const profbody = document.getElementById('profbody');
+const profCache = new Map(); // dept -> Promise<Map code -> profil>
+let profSeq = 0;
+function parseProfLine(l){
+  const p = l.split('|');
+  return {code:p[0], nom:p[1], dept:p[2], reg:p[3], pop:+p[4], vd:+p[5], vc:+p[6], sm:+p[7],
+    sexH:+p[8], a:[+p[9],+p[10],+p[11],+p[12]], di:[+p[13],+p[14]], s:[+p[15],+p[16],+p[17],+p[18]],
+    dual:+p[19], lo:+p[20], hi:+p[21], mo:[+p[22],+p[23],+p[24]]};
+}
+function loadProfiles(dept){
+  if(!profCache.has(dept)){
+    profCache.set(dept, loadChunks(`p_${dept}`).then(lines=>{
+      if(!Array.isArray(lines)) return null;
+      return new Map(lines.map(l=>{ const r = parseProfLine(l); return [r.code, r]; }));
+    }).catch(()=>null));
+  }
+  return profCache.get(dept);
+}
+const SEQ = ['--seq1','--seq2','--seq3','--seq4','--seq5'].map(v=>`var(${v})`);
+const CAT = ['--cat1','--cat2','--cat3','--cat4','--cat5'].map(v=>`var(${v})`);
+function r1(x){ return Math.round(x*10)/10; }
+function stackHTML(parts){
+  const bar = parts.map(p=>`<i style="width:${p.v}%;background:${p.c}" title="${p.l} : ${p.v.toLocaleString('fr-FR')} %"></i>`).join('');
+  const leg = parts.map(p=>`<span><span class="sw" style="background:${p.c}"></span>${p.l} <b>${p.v.toLocaleString('fr-FR')} %</b></span>`).join('');
+  return `<div class="stack">${bar}</div><div class="plegend">${leg}</div>`;
+}
+function cmpRow(lbl, val, max){
+  return `<div class="cmp-row"><span class="lbl">${lbl}</span>
+    <div class="track"><i style="width:${Math.min(val/max*100,100)}%"></i></div>
+    <span class="val">${val.toLocaleString('fr-FR')} %</span></div>`;
+}
+function hideProfile(){ profcard.hidden = true; profSeq++; }
+async function renderProfile(code, viaIris){
+  const seq = ++profSeq;
+  const dept = deptOf(code);
+  profcard.hidden = false;
+  if(!profCache.has(dept)){
+    profbody.innerHTML = '<p class="note">Chargement du profil détaillé de la commune…</p>';
+  }
+  const byCode = await loadProfiles(dept);
+  if(seq !== profSeq) return;
+  const r = byCode && byCode.get(code);
+  if(!r){
+    profbody.innerHTML = `<p class="note">Profil détaillé indisponible hors ligne —
+      <a href="${obsLink(code)}" target="_blank" rel="noopener">ouvrir la fiche dans l'Observatoire →</a></p>`;
+    return;
+  }
+  const regRate = REGRATES[r.reg];
+  const a5 = r1(100 - r.a.reduce((x,y)=>x+y,0));
+  const dSup = r1(100 - r.di[0] - r.di[1]);
+  const s5 = r1(100 - r.s.reduce((x,y)=>x+y,0));
+  const never = 2.8, ex = r1(100 - r.dual - never);
+  const maxScale = Math.max(r.vd, regRate||0, NAT_DAILY) * 1.15;
+  profbody.innerHTML = `
+    <div class="commune-head">
+      <h3>${r.nom}</h3>
+      <span class="codes"><span class="mono">${r.code}</span> · dépt ${r.dept} · ${REGNAMES[r.reg]||r.reg}
+      · ${fmt(Math.round(r.pop))} habitants de 18-75 ans${viaIris ? ` · fiche communale (quartier : ${viaIris})` : ''}</span>
+      <a class="obs" href="${obsLink(r.code)}" target="_blank" rel="noopener">Ouvrir dans l'Observatoire →</a>
+    </div>
+    <div class="bignums">
+      <div class="bn vape"><b>${r.vd.toLocaleString('fr-FR')} %</b><span>vapotage quotidien estimé (18-75 ans)${r.lo ? ` · fourchette 90 % : ${r.lo.toLocaleString('fr-FR')} – ${r.hi.toLocaleString('fr-FR')} %` : ''}</span></div>
+      <div class="bn vape"><b>${r.vc.toLocaleString('fr-FR')} %</b><span>vapotage actuel (quotidien + occasionnel)</span></div>
+      <div class="bn plain"><b>${fmt(Math.round(r.pop*r.vd/100))}</b><span>vapoteurs quotidiens estimés</span></div>
+      <div class="bn smoke"><b>${r.sm.toLocaleString('fr-FR')} %</b><span>tabagisme quotidien estimé</span></div>
+    </div>
+    <div class="compare">
+      ${cmpRow(r.nom.length>18 ? 'Commune' : r.nom, r.vd, maxScale)}
+      ${regRate ? cmpRow(REGNAMES[r.reg], regRate, maxScale) : ''}
+      ${cmpRow('France hexagonale', NAT_DAILY, maxScale)}
+    </div>
+    <div class="profiles">
+      <div class="pgroup"><h4>Vapoteurs par sexe</h4>
+        ${stackHTML([{l:'Hommes',v:r.sexH,c:SEQ[0]},{l:'Femmes',v:r1(100-r.sexH),c:SEQ[3]}])}</div>
+      <div class="pgroup"><h4>Vapoteurs par âge</h4>
+        ${stackHTML([{l:'18-24',v:r.a[0],c:SEQ[0]},{l:'25-39',v:r.a[1],c:SEQ[1]},{l:'40-54',v:r.a[2],c:SEQ[2]},{l:'55-64',v:r.a[3],c:SEQ[3]},{l:'65-75',v:a5,c:SEQ[4]}])}</div>
+      <div class="pgroup"><h4>Vapoteurs par statut tabagique</h4>
+        ${stackHTML([{l:'Fument aussi (double usage)',v:r.dual,c:CAT[1]},{l:'Ex-fumeurs',v:ex,c:CAT[0]},{l:'Jamais fumeurs',v:never,c:SEQ[4]}])}</div>
+      <div class="pgroup"><h4>Vapoteurs par diplôme</h4>
+        ${stackHTML([{l:'Inférieur au bac',v:r.di[0],c:SEQ[2]},{l:'Bac',v:r.di[1],c:SEQ[0]},{l:'Supérieur au bac',v:dSup,c:SEQ[4]}])}</div>
+      <div class="pgroup"><h4>Vapoteurs par situation</h4>
+        ${stackHTML([{l:'Actifs occupés',v:r.s[0],c:CAT[0]},{l:'Chômeurs',v:r.s[1],c:CAT[1]},{l:'Étudiants',v:r.s[2],c:CAT[3]},{l:'Retraités',v:r.s[3],c:CAT[2]},{l:'Autres inactifs',v:s5,c:CAT[4]}])}</div>
+      ${r.mo && !isNaN(r.mo[0]) ? `<div class="pgroup"><h4>Vapoteurs par motif dominant d'usage</h4>
+        ${stackHTML([{l:'Sevrage tabagique',v:r.mo[0],c:CAT[0]},{l:'Réduction & santé',v:r.mo[1],c:SEQ[2]},{l:'Économique',v:r.mo[2],c:CAT[2]},{l:'Récréatif & saveurs',v:r1(100-r.mo[0]-r.mo[1]-r.mo[2]),c:CAT[4]}])}</div>` : ''}
+    </div>`;
+}
 
 // --- recherche de commune ---------------------------------------------------
 const qInput = document.getElementById('q'), sugg = document.getElementById('sugg');
