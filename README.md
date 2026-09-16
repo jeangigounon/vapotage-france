@@ -12,10 +12,10 @@ INSEE, calibration régionale multi-vagues avec partial pooling.
 pétition ou participer à une manifestation, aux mêmes échelles. Pondérations
 dérivées de la méta-analyse Boulianne & Earl (*Science Advances*, 2026, 181 études),
 ancrage français sur l'enquête TeO2 (INSEE-INED), et intégration du vote de gauche
-observé (présidentielle 2022). Méthodologie et limites dans
-`docs/indice_participation_politique.md`.
+observé (présidentielle 2022).
 
-Méthodologie complète des deux modèles dans `docs/`.
+La note méthodologique complète des deux modèles (sources, équations, validations,
+limites) est disponible sur demande.
 
 ## Utilisation
 
@@ -38,7 +38,6 @@ python -m http.server 8000
   profils des vapoteurs (sexe, âge, diplôme, situation, statut tabagique),
   classements. Lien direct vers une commune : `observatoire.html#c=35238`.
 - **`data/`** — les estimations complètes en CSV (`;`, UTF-8 BOM).
-- **`docs/`** — méthodologie, sources, validations, revue de littérature.
 
 ## Lecture des estimations
 
