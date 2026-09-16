@@ -51624,10 +51624,23 @@ function renderCommunes(code){
 
 function renderCommuneFeats(code, feats){
   const p = pathFor(code.startsWith('97') ? code : null);
+  const atLevel = !currentCommune && !currentIrisParent;
+  // vue simple : échelle locale départementale — l'échelle nationale écrase les
+  // contrastes dans les départements uniformément hauts ou bas (ex. Bretagne)
+  let fillOf = f=>fillRates(comRates.get(f.properties.code), false);
+  if(view.mode === 'simple'){
+    const g = VIEWS[view.ind].get;
+    const s = localScale(feats, comRates, g);
+    if(s){
+      fillOf = f=>{ const r = comRates.get(f.properties.code); return r ? rampAt(g(r), s) : 'var(--chip)'; };
+      if(atLevel) setLegendLocal(s.lo, s.hi,
+        `les communes — ${DEPTNAMES[code]||code}`, '5e-95e percentile départemental');
+    }
+  } else if(atLevel){ renderLegend(); }
   gCom.selectAll('path').data(feats, f=>f.properties.code).join('path')
     .attr('class','commune')
     .attr('d', p)
-    .attr('fill', f=>fillRates(comRates.get(f.properties.code), false))
+    .attr('fill', fillOf)
     .attr('stroke','var(--border-map)').attr('stroke-width',.5)
     .attr('opacity',1).style('pointer-events','auto')
     .on('mousemove',(ev,f)=>{
@@ -51653,10 +51666,21 @@ function renderCommuneFeats(code, feats){
 function renderArrondissements(communeCode){
   const feats = arrByCommune.get(communeCode) || [];
   const p = pathFor(null);
+  const atLevel = !currentIrisParent;
+  let fillOf = f=>fillRates(comRates.get(f.properties.code), false);
+  if(view.mode === 'simple'){
+    const g = VIEWS[view.ind].get;
+    const s = localScale(feats, comRates, g);
+    if(s){
+      fillOf = f=>{ const r = comRates.get(f.properties.code); return r ? rampAt(g(r), s) : 'var(--chip)'; };
+      if(atLevel) setLegendLocal(s.lo, s.hi,
+        `les arrondissements de ${comRates.get(communeCode)?.nom || communeCode}`, '5e-95e percentile local');
+    }
+  } else if(atLevel){ renderLegend(); }
   gArr.selectAll('path').data(feats, f=>f.properties.code).join('path')
     .attr('class','arr')
     .attr('d', p)
-    .attr('fill', f=>fillRates(comRates.get(f.properties.code), false))
+    .attr('fill', fillOf)
     .attr('stroke','var(--border-map)').attr('stroke-width',.35)
     .attr('opacity',1).style('pointer-events','auto')
     .on('mousemove',(ev,f)=>{
@@ -51734,23 +51758,41 @@ function renderLegend(){
   }
 }
 function setLegendGlobal(){ renderLegend(); }
-function setLegendLocal(lo, hi, nom){
+function setLegendLocal(lo, hi, desc, bornes){
   if(view.mode !== 'simple'){ renderLegend(); return; }
   legTitle.textContent = VIEWS[view.ind].label;
   legGrad.hidden = false; legTicks.hidden = false; bivleg.hidden = true;
-  legTicks.innerHTML = `<span>${fmtPct(lo)}</span><span>${fmtPct((lo+hi)/2)}</span><span>${fmtPct(hi)}</span>`;
-  legNote.textContent = `Échelle locale — contrastes entre les quartiers de ${nom} `
-    + '(la palette couvre l’écart min-max local, pas l’échelle nationale).';
+  legTicks.innerHTML = `<span>≤ ${fmtPct(lo)}</span><span>${fmtPct((lo+hi)/2)}</span><span>≥ ${fmtPct(hi)}</span>`;
+  legNote.textContent = `Échelle locale — contrastes entre ${desc} `
+    + `(bornes : ${bornes}, pas l’échelle nationale).`;
+}
+// échelle locale pour une liste de territoires (P5-P95, élargie si dégénérée)
+function localScale(feats, ratesMap, g){
+  const vals = feats.map(f=>{ const r = ratesMap.get(f.properties.code); return r ? g(r) : null; })
+                    .filter(v=>v!=null && isFinite(v)).sort((x,y)=>x-y);
+  if(!vals.length) return null;
+  let lo = qtile(vals,.05), hi = qtile(vals,.95);
+  if(!(hi > lo)){ lo = vals[0] - .5; hi = vals[vals.length-1] + .5; }
+  return {lo, hi};
 }
 
 // --- bascule de vue ---------------------------------------------------------
 function repaintAll(){
   gDepts.selectAll('path').attr('fill', d=>fillRates(deptAgg[d.properties.code], true));
-  gCom.selectAll('path').attr('fill', f=>fillRates(comRates.get(f.properties.code), false));
-  gArr.selectAll('path').attr('fill', f=>fillRates(comRates.get(f.properties.code), false));
+  const comFeats = gCom.selectAll('path').data();
+  if(currentDept && !currentCommune && !currentIrisParent && comFeats.length){
+    renderCommuneFeats(currentDept, comFeats); // ré-applique l'échelle locale + légende
+  } else {
+    gCom.selectAll('path').attr('fill', f=>fillRates(comRates.get(f.properties.code), false));
+  }
+  if(currentCommune && !currentIrisParent){
+    renderArrondissements(currentCommune);
+  } else {
+    gArr.selectAll('path').attr('fill', f=>fillRates(comRates.get(f.properties.code), false));
+  }
   if(currentIrisParent){
     renderIrisFeats(currentIrisParent, gIris.selectAll('path').data());
-  } else {
+  } else if(!currentDept){
     renderLegend();
   }
 }
@@ -51799,7 +51841,8 @@ function renderIrisFeats(parentCode, feats){
     let lo = Math.min(...vals), hi = Math.max(...vals);
     if(!(hi > lo)){ lo -= .5; hi += .5; }
     irisFill = r => r ? rampAt(g(r), {lo, hi}) : 'var(--chip)';
-    setLegendLocal(lo, hi, comRates.get(parentCode)?.nom || parentCode);
+    setLegendLocal(lo, hi, `les quartiers de ${comRates.get(parentCode)?.nom || parentCode}`,
+      'écart min-max local');
   } else {
     // classes nationales (communes) + nuance tonale locale : au sein d'une même
     // classe, la tonalité varie selon la position du quartier sur les deux
