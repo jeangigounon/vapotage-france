@@ -142,7 +142,7 @@ footer{margin-top:18px; color:var(--ink-soft); font-size:.78rem; max-width:85ch}
     <div class="eyebrow">Modèle prédictif · vapotage quotidien des 18-75 ans</div>
     <h1>Carte du vapotage communal</h1>
     <p class="sub">Cliquez sur un département pour voir ses communes, puis sur une commune de plus
-    de 10 000 habitants pour ses quartiers IRIS (~2 000 hab) — arrondissements puis quartiers
+    de 10 000 habitants pour ses quartiers IRIS (~2 000 hab) ; arrondissements puis quartiers
     pour Paris, Lyon et Marseille. Estimations du modèle synthétique (EROPP 2023 × INSEE RP2023/2022).</p>
   </div>
   <div class="crumb" id="crumb">
@@ -177,6 +177,10 @@ footer{margin-top:18px; color:var(--ink-soft); font-size:.78rem; max-width:85ch}
         <option value="dual">% de vapoteurs en double usage (fument aussi)</option>
       </optgroup>
     </select>
+    <div class="vb-mode" role="tablist">
+      <button id="scaleDept" class="on">Échelle départementale</button>
+      <button id="scaleNat">Échelle nationale</button>
+    </div>
   </div>
   <div id="vbBi" class="vb-controls" hidden>
     <label for="indA">Croiser</label>
@@ -219,8 +223,8 @@ footer{margin-top:18px; color:var(--ink-soft); font-size:.78rem; max-width:85ch}
       <h2>Repères nationaux</h2>
       <div class="kv">
         <div><span>France hexagonale</span><b>6,1 %</b></div>
-        <div><span>Région la plus haute — Bretagne (2024)</span><b>9,1 %</b></div>
-        <div><span>Régions les plus basses — ARA / Grand Est</span><b>4,6-4,7 %</b></div>
+        <div><span>Région la plus haute : Bretagne (2024)</span><b>9,1 %</b></div>
+        <div><span>Régions les plus basses : ARA / Grand Est</span><b>4,6-4,7 %</b></div>
         <div><span>Vapoteurs quotidiens estimés</span><b>≈ 2,8 M</b></div>
       </div>
       <p class="note">Profils détaillés des vapoteurs par commune (sexe, âge, diplôme, situation,
@@ -233,7 +237,7 @@ footer{margin-top:18px; color:var(--ink-soft); font-size:.78rem; max-width:85ch}
   <div id="profbody"></div>
 </div>
 
-<footer>Estimations synthétiques — aucune donnée de vapotage n'existe au niveau communal ; les taux
+<footer>Estimations synthétiques : aucune donnée de vapotage n'existe au niveau communal ; les taux
 reflètent la composition sociodémographique locale, calibrée sur les prévalences régionales
 des enquêtes 2021 et 2023 combinées puis rétrécies vers la moyenne nationale au prorata du
 bruit d'échantillonnage (partial pooling). Les fiches affichent la fourchette à 90 %
@@ -51329,7 +51333,7 @@ const VIEWS = {
   eco:  {label:'% de vapoteurs par économie',           short:'économie',      get:r=>r.eco,  dep:a=>a[7]},
   rec:  {label:'% de vapoteurs récréatifs & saveurs',   short:'récréatif',     get:r=>r.rec,  dep:a=>a[8]},
 };
-const view = {mode:'simple', ind:'vd', a:'vd', b:'rec'};
+const view = {mode:'simple', ind:'vd', a:'vd', b:'rec', scale:'dept'};
 
 // bornes (P5-P95 des communes) et tertiles par indicateur, calculées à la volée
 const isArr = c => /^(751\d\d|132\d\d|6938\d)$/.test(c);
@@ -51625,16 +51629,16 @@ function renderCommunes(code){
 function renderCommuneFeats(code, feats){
   const p = pathFor(code.startsWith('97') ? code : null);
   const atLevel = !currentCommune && !currentIrisParent;
-  // vue simple : échelle locale départementale — l'échelle nationale écrase les
+  // vue simple, échelle départementale : l'échelle nationale écrase les
   // contrastes dans les départements uniformément hauts ou bas (ex. Bretagne)
   let fillOf = f=>fillRates(comRates.get(f.properties.code), false);
-  if(view.mode === 'simple'){
+  if(view.mode === 'simple' && view.scale === 'dept'){
     const g = VIEWS[view.ind].get;
     const s = localScale(feats, comRates, g);
     if(s){
       fillOf = f=>{ const r = comRates.get(f.properties.code); return r ? rampAt(g(r), s) : 'var(--chip)'; };
       if(atLevel) setLegendLocal(s.lo, s.hi,
-        `les communes — ${DEPTNAMES[code]||code}`, '5e-95e percentile départemental');
+        `les communes (${DEPTNAMES[code]||code})`, '5e-95e percentile départemental');
     }
   } else if(atLevel){ renderLegend(); }
   gCom.selectAll('path').data(feats, f=>f.properties.code).join('path')
@@ -51668,7 +51672,7 @@ function renderArrondissements(communeCode){
   const p = pathFor(null);
   const atLevel = !currentIrisParent;
   let fillOf = f=>fillRates(comRates.get(f.properties.code), false);
-  if(view.mode === 'simple'){
+  if(view.mode === 'simple' && view.scale === 'dept'){
     const g = VIEWS[view.ind].get;
     const s = localScale(feats, comRates, g);
     if(s){
@@ -51763,8 +51767,8 @@ function setLegendLocal(lo, hi, desc, bornes){
   legTitle.textContent = VIEWS[view.ind].label;
   legGrad.hidden = false; legTicks.hidden = false; bivleg.hidden = true;
   legTicks.innerHTML = `<span>≤ ${fmtPct(lo)}</span><span>${fmtPct((lo+hi)/2)}</span><span>≥ ${fmtPct(hi)}</span>`;
-  legNote.textContent = `Échelle locale — contrastes entre ${desc} `
-    + `(bornes : ${bornes}, pas l’échelle nationale).`;
+  legNote.textContent = `Échelle locale : contrastes entre ${desc}. `
+    + `Bornes : ${bornes}, pas l’échelle nationale.`;
 }
 // échelle locale pour une liste de territoires (P5-P95, élargie si dégénérée)
 function localScale(feats, ratesMap, g){
@@ -51812,6 +51816,16 @@ function setMode(m){
 modeSimpleBtn.addEventListener('click', ()=>setMode('simple'));
 modeBiBtn.addEventListener('click', ()=>setMode('bi'));
 indSel.addEventListener('change', ()=>{ view.ind = indSel.value; repaintAll(); });
+const scaleDeptBtn = document.getElementById('scaleDept');
+const scaleNatBtn = document.getElementById('scaleNat');
+function setScale(s){
+  view.scale = s;
+  scaleDeptBtn.classList.toggle('on', s === 'dept');
+  scaleNatBtn.classList.toggle('on', s === 'nat');
+  repaintAll();
+}
+scaleDeptBtn.addEventListener('click', ()=>setScale('dept'));
+scaleNatBtn.addEventListener('click', ()=>setScale('nat'));
 indASel.addEventListener('change', ()=>{ view.a = indASel.value; repaintAll(); });
 indBSel.addEventListener('change', ()=>{ view.b = indBSel.value; repaintAll(); });
 
@@ -52059,7 +52073,7 @@ async function renderProfile(code, viaIris){
   if(seq !== profSeq) return;
   const r = byCode && byCode.get(code);
   if(!r){
-    profbody.innerHTML = `<p class="note">Profil détaillé indisponible hors ligne —
+    profbody.innerHTML = `<p class="note">Profil détaillé indisponible hors ligne :
       <a href="${obsLink(code)}" target="_blank" rel="noopener">ouvrir la fiche dans l'Observatoire →</a></p>`;
     return;
   }
