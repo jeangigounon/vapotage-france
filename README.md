@@ -35,11 +35,11 @@ python -m http.server 8000
   de croiser deux indicateurs ; la fiche complète du territoire sélectionné
   s'affiche sous la carte.
 - **`belgique.html`** — la même carte pour les 565 communes belges (Belgique →
-  province → commune) : taux de vapotage actuel estimé (Score A, HIS 2023
+  province → commune → quartier, 19 783 secteurs statistiques) : taux de vapotage actuel estimé (Score A, HIS 2023
   Sciensano × Statbel 2025), tabagisme estimé 2022, profils de vapoteurs projetés,
   engagement civique et typologie stratégique à 5 types. Le sélecteur « Pays » en
   haut à droite permet de passer d'un pays à l'autre. Le taux belge est l'usage
-  actuel des 15 ans et plus, le taux français l'usage quotidien des 18-75 ans :
+  actuel des adultes, le taux français l'usage quotidien des 18-75 ans :
   comparer les positions relatives, pas les niveaux.
 - **`observatoire.html`** — fiche détaillée par commune : taux, fourchette à 90 %,
   profils des vapoteurs (sexe, âge, diplôme, situation, statut tabagique),

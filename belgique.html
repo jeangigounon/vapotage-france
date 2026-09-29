@@ -21080,7 +21080,7 @@ function renderSectProfile(code){
   const maxScale = Math.max(s.va, r.va, a.va, HIS.BE) * 1.15;
   const cmp = cmpRow(s.nom.length > 22 ? 'Quartier' : s.nom, s.va, maxScale) + cmpRow(r.nom, r.va, maxScale)
     + cmpRow(a.nom_long, a.va, maxScale) + cmpRow('Belgique (enquête 2023)', HIS.BE, maxScale);
-  const meta = `quartier <span class="mono">${code}</span> · ${r.nom} · ${PROVNAMES[r.prov]} · ${fmt(s.pop)} adultes (recensement 2021)`;
+  const meta = `quartier <span class="mono">${code}</span> · ${r.nom} · ${a.nom_long} · ${fmt(s.pop)} adultes (recensement 2021)`;
   const o = {...r, nom:s.nom, va:s.va, ages:s.ages, hommes:s.hommes!=null?s.hommes:r.hommes, degurbaLbl:(DEGURBA[r.degurba]||'—') + ' (commune)',
              revenu:s.revenu, revenuLbl:'Revenu fiscal médian du quartier', smlo:null, rangReg:null};
   profbody.innerHTML = panelHTML(o, meta, cmp, typoBlockCommune(r),
